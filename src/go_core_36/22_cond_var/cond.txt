@@ -1,0 +1,47 @@
+@ meituan interview 3rd
+// ! pseudocode of message queue
+
+/*
+ - BlockingQueue
+    - 生产者 Push 产生消息
+    - 消费者 Pop 消费消息
+        a) 如果队列为空，消费者立即返回
+        b) 如果队列为空，消费者在队列中等待
+*/
+
+class msg{
+    private:
+    int msg_vol;
+    queue<int> msg_queue;
+    mutex lock;//!
+    sync_cond consumer_cond(lock);//!
+    public:
+    void init(){
+        msg_vol = 5;
+    }
+    void push(int msg){
+        while(1){
+            lock.lock();
+            if(msg_queue.size()>msg_vol){
+                lock.unlock();
+                continue;
+            }
+            msg_queue.push(msg);
+            lock.unlock();
+            consumer_cond.signal();//!notify
+            break;
+        }
+    }
+    int pop(){
+        while(1){
+            lock.lock();
+            while(msg_queue.size()==0){
+                consumer_cond.wait();
+            }
+            int msg = msg_queue.front();
+            msg_queue.pop();
+            lock.unlock();
+            return msg;
+        }
+    }
+};
